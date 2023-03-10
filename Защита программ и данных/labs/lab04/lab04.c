@@ -5,8 +5,8 @@
 #define PROVIDER_NAME NULL
 #define PROVIDER_TYPE PROV_RSA_FULL
 
-void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange);
-void CreateKey(HCRYPTPROV Provider, DWORD KeySpec);
+void CreateContainer(LPCTSTR ContainerName, BOOL SignatureKeyNeeded, BOOL KeyExchangeKeyNeeded);
+void CreateKey(HCRYPTPROV Provider, DWORD KeyType);
 void DestroyContainer(LPCTSTR ContainerName);
 void PrintInfoAboutContainers();
 
@@ -27,15 +27,15 @@ int main()
 	return 0;
 }
 
-void CreateKey(HCRYPTPROV Provider, DWORD KeySpec)
+void CreateKey(HCRYPTPROV Provider, DWORD KeyType)
 {
 	HCRYPTKEY Key;
 
-	if(!CryptGetUserKey(Provider, KeySpec, &Key))
+	if(!CryptGetUserKey(Provider, KeyType, &Key))
 	{
 		if(GetLastError() == NTE_NO_KEY)
 		{
-			if(!CryptGenKey(Provider, KeySpec, 0, &Key))
+			if(!CryptGenKey(Provider, KeyType, 0, &Key))
 			{
 				printf("Error occurred creating a signature key.\n");
 				return;
@@ -54,7 +54,7 @@ void CreateKey(HCRYPTPROV Provider, DWORD KeySpec)
 	}
 }
 
-void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange)
+void CreateContainer(LPCTSTR ContainerName, BOOL SignatureKeyNeeded, BOOL KeyExchangeKeyNeeded)
 {
 	HCRYPTPROV Provider;
 
@@ -75,11 +75,11 @@ void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange)
 		}
 	}
 
-	if (Signature)
+	if (SignatureKeyNeeded)
 	{
 		CreateKey(Provider, AT_SIGNATURE);
 	}
-	if (KeyExchange)
+	if (KeyExchangeKeyNeeded)
 	{
 		CreateKey(Provider, AT_KEYEXCHANGE);
 	}
