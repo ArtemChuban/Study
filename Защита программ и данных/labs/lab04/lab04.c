@@ -2,11 +2,29 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+#define PROVIDER_NAME NULL
+#define PROVIDER_TYPE PROV_RSA_FULL
 
-void ErrorHandle(LPCTSTR description)
+void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange);
+void CreateKey(HCRYPTPROV Provider, DWORD KeySpec);
+void DestroyContainer(LPCTSTR ContainerName);
+void PrintInfoAboutContainers();
+
+int main()
 {
-	printf("%s", description);
-	exit(1);
+	CreateContainer("Empty container", FALSE, FALSE);
+	CreateContainer("Only exchange container", FALSE, TRUE);
+	CreateContainer("Only signature container", TRUE, FALSE);
+	CreateContainer("Both container", TRUE, TRUE);
+
+	PrintInfoAboutContainers();
+
+	DestroyContainer("Empty container");
+	DestroyContainer("Only exchange container");
+	DestroyContainer("Only signature container");
+	DestroyContainer("Both container");
+
+	return 0;
 }
 
 void CreateKey(HCRYPTPROV Provider, DWORD KeySpec)
@@ -30,12 +48,9 @@ void CreateKey(HCRYPTPROV Provider, DWORD KeySpec)
 		}
 	}
 
-	if(Key)
+	if(Key && !(CryptDestroyKey(Key)))
 	{
-		if(!(CryptDestroyKey(Key)))
-		{
-			printf("Error during CryptDestroyKey.");
-		}
+		printf("Error during CryptDestroyKey.");
 	}
 }
 
@@ -43,11 +58,11 @@ void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange)
 {
 	HCRYPTPROV Provider;
 
-	if(!CryptAcquireContext(&Provider, ContainerName, NULL, PROV_RSA_FULL, 0))
+	if(!CryptAcquireContext(&Provider, ContainerName, PROVIDER_NAME, PROVIDER_TYPE, 0))
 	{
 		if(GetLastError() == NTE_BAD_KEYSET)
 		{
-			if(!CryptAcquireContext(&Provider, ContainerName, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+			if(!CryptAcquireContext(&Provider, ContainerName, PROVIDER_NAME, PROVIDER_TYPE, CRYPT_NEWKEYSET))
 			{
 				printf("Could not create a new key container with name %s.\n", ContainerName);
 				return;
@@ -69,19 +84,16 @@ void CreateContainer(LPCTSTR ContainerName, BOOL Signature, BOOL KeyExchange)
 		CreateKey(Provider, AT_KEYEXCHANGE);
 	}
 
-	if(Provider)
+	if(Provider && !(CryptReleaseContext(Provider, 0)))
 	{
-		if(!(CryptReleaseContext(Provider, 0)))
-		{
-			printf("Error during CryptReleaseContext while creating container with name %s.\n", ContainerName);
-		}
+		printf("Error during CryptReleaseContext while creating container with name %s.\n", ContainerName);
 	}
 }
 
 void DestroyContainer(LPCTSTR ContainerName)
 {
 	HCRYPTPROV Provider;
-	if(!CryptAcquireContext(&Provider, ContainerName, NULL, PROV_RSA_FULL, 0))
+	if(!CryptAcquireContext(&Provider, ContainerName, PROVIDER_NAME, PROVIDER_TYPE, 0))
 	{
 		if(GetLastError() == NTE_BAD_KEYSET)
 		{
@@ -93,13 +105,13 @@ void DestroyContainer(LPCTSTR ContainerName)
 		}
 		return;
 	}
-	CryptAcquireContext(&Provider, ContainerName, NULL, PROV_RSA_FULL, CRYPT_DELETE_KEYSET);
+	CryptAcquireContext(&Provider, ContainerName, PROVIDER_NAME, PROVIDER_TYPE, CRYPT_DELETE_KEYSET);
 }
 
-void Containers()
+void PrintInfoAboutContainers()
 {
 	HCRYPTPROV Provider;
-	CryptAcquireContext(&Provider, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+	CryptAcquireContext(&Provider, NULL, PROVIDER_NAME, PROVIDER_TYPE, CRYPT_VERIFYCONTEXT);
 	DWORD Flags = CRYPT_FIRST;
 	DWORD DataLength;
 
@@ -119,7 +131,7 @@ void Containers()
 
 			printf("%30s", ContainerName);
 
-			CryptAcquireContext(&ProviderWithContainer, ContainerName, NULL, PROV_RSA_FULL, 0);
+			CryptAcquireContext(&ProviderWithContainer, ContainerName, PROVIDER_NAME, PROVIDER_TYPE, 0);
 
 			HCRYPTKEY Key;
 			if (CryptGetUserKey(ProviderWithContainer, AT_SIGNATURE, &Key))
@@ -148,28 +160,10 @@ void Containers()
 		}
 		else
 		{
-			DWORD error = GetLastError();
-			if (error == ERROR_NO_MORE_ITEMS)
+			if (GetLastError() == ERROR_NO_MORE_ITEMS)
 			{
 				break;
 			}
 		}
 	}
-}
-
-int main()
-{
-	CreateContainer("Empty container", FALSE, FALSE);
-	CreateContainer("Only exchange container", FALSE, TRUE);
-	CreateContainer("Only signature container", TRUE, FALSE);
-	CreateContainer("Both container", TRUE, TRUE);
-
-	Containers();
-
-	DestroyContainer("Empty container");
-	DestroyContainer("Only exchange container");
-	DestroyContainer("Only signature container");
-	DestroyContainer("Both container");
-
-	return 0;
 }
