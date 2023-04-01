@@ -29,7 +29,7 @@ int main()
 	pbBuffer = malloc(dwBufferLen * sizeof(BYTE));
 	fread(pbBuffer, dwBufferLen, 1, File);
 	fclose(File);
-	printf("File has been readed.\n");
+	printf("File has been read.\n");
 
 	if(!CryptAcquireContext(&hProv, CONTAINER_NAME, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET))
 	{
@@ -38,7 +38,7 @@ int main()
 	}
 	printf("CSP context acquired.\n");
 
-	if(!CryptGenKey(hProv, AT_SIGNATURE, CRYPT_EXPORTABLE, &hKey)) 
+	if(!CryptGenKey(hProv, AT_SIGNATURE, CRYPT_EXPORTABLE, &hKey))
 	{
 		printf("Error %x during CryptGetUserKey for signkey.\n", GetLastError());
 		CryptAcquireContext(&hProv, CONTAINER_NAME, NULL, PROV_RSA_FULL, CRYPT_DELETE_KEYSET);
@@ -46,7 +46,7 @@ int main()
 	}
 	printf("The signature key has been acquired. \n");
 
-	if(!CryptExportKey(hKey, 0, PUBLICKEYBLOB, 0, NULL, &dwBlobLen)) 
+	if(!CryptExportKey(hKey, 0, PUBLICKEYBLOB, 0, NULL, &dwBlobLen))
 	{
 		printf("Error %x computing BLOB length.\n", GetLastError());
 		CryptDestroyKey(hKey);
@@ -74,7 +74,7 @@ int main()
 	}
 	printf("Contents have been written to the BLOB.\n");
 
-	File = fopen("public.key", "w");
+	File = fopen("public.key", "wb");
 	if (File == NULL)
 	{
 		printf("Error: cant write public key blob to file. Error code: %x\n", GetLastError());
@@ -87,7 +87,7 @@ int main()
 	fclose(File);
 	printf("Public key blob has been writed to file.\n");
 
-	if(!CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash)) 
+	if(!CryptCreateHash(hProv, CALG_MD5, 0, 0, &hHash))
 	{
 		printf("Error %x during CryptCreateHash.\n", GetLastError());
 		free(pbKeyBlob);
@@ -108,7 +108,7 @@ int main()
 	}
 	printf("The data buffer has been hashed.\n");
 
-	if(!CryptSignHash(hHash, AT_SIGNATURE, NULL, 0, NULL, &dwSigLen)) 
+	if(!CryptSignHash(hHash, AT_SIGNATURE, NULL, 0, NULL, &dwSigLen))
 	{
 		printf("Error %x during CryptSignHash.\n", GetLastError());
 		CryptDestroyHash(hHash);
@@ -130,7 +130,7 @@ int main()
 	}
 	printf("Memory allocated for the signature.\n");
 
-	if(!CryptSignHash(hHash, AT_SIGNATURE, NULL, 0, pbSignature, &dwSigLen)) 
+	if(!CryptSignHash(hHash, AT_SIGNATURE, NULL, 0, pbSignature, &dwSigLen))
 	{
 		printf("Error %x during CryptSignHash.\n", GetLastError());
 		free(pbSignature);
@@ -142,10 +142,10 @@ int main()
 	}
 	printf("pbSignature is the hash signature.\n");
 
-	File = fopen("signature.bin", "w");
+	File = fopen("signature.bin", "wb");
 	if (File == NULL)
 	{
-		printf("Error: cant write signature to file. Error code: %x\n", GetLastError());
+		printf("Error: cant rite signature to file. Error code: %x\n", GetLastError());
 		free(pbSignature);
 		CryptDestroyHash(hHash);
 		free(pbKeyBlob);

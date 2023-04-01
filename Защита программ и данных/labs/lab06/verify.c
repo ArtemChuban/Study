@@ -17,7 +17,7 @@ int main()
 	BYTE* pbSignature;
 	DWORD dwSigLen;
 
-	if(!CryptAcquireContext(&hProv, CONTAINER_NAME, NULL, PROV_RSA_FULL, CRYPT_NEWKEYSET))
+	if(!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT))
 	{
 		printf("Error %x during CryptAcquireContext.\n", GetLastError());
 		exit(1);
