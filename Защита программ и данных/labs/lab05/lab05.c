@@ -9,6 +9,9 @@ HCRYPTPROV CreateContainer(LPCTSTR ContainerName);
 void DestroyContainer(LPCTSTR ContainerName);
 void DestroyContainers();
 void CreateContainers(HCRYPTPROV* Container1, HCRYPTPROV* Container2, HCRYPTPROV* Container3);
+BOOL ReadBinaryFile(LPTSTR FileName, BYTE** Buffer, DWORD* BufferLength);
+BOOL WriteBinaryFile(LPTSTR FileName, BYTE* Buffer, DWORD BufferLength);
+
 BOOL Task34(HCRYPTPROV Container);
 BOOL Task5(HCRYPTPROV Container);
 BOOL Task6();
@@ -26,65 +29,55 @@ int main()
 
 	CreateContainers(&Container1, &Container2, &Container3);
 
-	if (!Task34(Container1))
+	if (!(Task34(Container1) &&
+		  Task5(Container2) &&
+		  Task6() &&
+		  Task7(Container1) &&
+		  Task8(Container2) &&
+		  Task9(Container3) &&
+		  Task10(Container1) &&
+		  Task11(Container3)))
 	{
 		printf("Halting.\n");
 		DestroyContainers();
 		exit(1);
 	}
-
-	if (!Task5(Container2))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task6())
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task7(Container1))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task8(Container2))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task9(Container3))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task10(Container1))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-	if (!Task11(Container3))
-	{
-		printf("Halting.\n");
-		DestroyContainers();
-		exit(1);
-	}
-
-
 	DestroyContainers();
 	return 0;
+}
+
+BOOL ReadBinaryFile(LPTSTR FileName, BYTE** Buffer, DWORD* BufferLength)
+{
+	FILE* File;
+
+	File = fopen(FileName, "rb");
+	if (File == NULL)
+	{
+		printf("Error: cant open file %s.\n", FileName);
+		return FALSE;
+	}
+	fseek(File, 0, SEEK_END);
+	*BufferLength = ftell(File);
+	rewind(File);
+	*Buffer = malloc(*BufferLength * sizeof(BYTE));
+	fread(*Buffer, *BufferLength, 1, File);
+	fclose(File);
+	return TRUE;
+}
+
+BOOL WriteBinaryFile(LPTSTR FileName, BYTE* Buffer, DWORD BufferLength)
+{
+	FILE* File;
+
+	File = fopen(FileName, "w");
+	if (File == NULL)
+	{
+		printf("Error: cant write file \"%s\". Error code: %x\n", FileName, GetLastError());
+		return FALSE;
+	}
+	fwrite(Buffer, BufferLength, 1, File);
+	fclose(File);
+	return TRUE;
 }
 
 BOOL Task11(HCRYPTPROV Container)
@@ -96,18 +89,10 @@ BOOL Task11(HCRYPTPROV Container)
 
 	printf("Task 11:\n");
 
-	File = fopen("KeyX Private Unencrypted.bin", "rb");
-	if (File == NULL)
+	if (!ReadBinaryFile("KeyX Private Unencrypted.bin", &Blob, &BlobLength))
 	{
-		printf("Error: cant open file \"KeyX Private Unencrypted.bin\".\n");
 		return FALSE;
 	}
-	fseek(File, 0, SEEK_END);
-	BlobLength = ftell(File);
-	rewind(File);
-	Blob = malloc(BlobLength * sizeof(BYTE));
-	fread(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("File \"KeyX Private Unencrypted.bin\" has been readed to blob.\n");
 
 	if (!CryptImportKey(Container, Blob, BlobLength, 0, CRYPT_EXPORTABLE, &Key))
@@ -212,18 +197,10 @@ BOOL Task9(HCRYPTPROV Container)
 	printf("The key has been derived.\n");
 	CryptDestroyHash(Hash);
 
-	File = fopen("DS Private Encrypted.bin", "rb");
-	if (File == NULL)
+	if (!ReadBinaryFile("DS Private Encrypted.bin", &Blob, &BlobLength))
 	{
-		printf("Error: cant open file \"DS Private Encrypted.bin\".\n");
 		return FALSE;
 	}
-	fseek(File, 0, SEEK_END);
-	BlobLength = ftell(File);
-	rewind(File);
-	Blob = malloc(BlobLength * sizeof(BYTE));
-	fread(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("File \"DS Private Encrypted.bin\" has been readed to blob.\n");
 
 	// TODO: This `if` doesnt work properly: throws NTE_BAD_DATA.
@@ -280,17 +257,13 @@ BOOL Task8(HCRYPTPROV Container)
 	}
 	printf("Key has been exported to private key blob.\n");
 
-	File = fopen("DS Private Unencrypted.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("DS Private Unencrypted.bin", Blob, BlobLength))
 	{
-		printf("Error: cant write private key blob to file. Error code: %x\n", GetLastError());
 		fclose(File);
 		free(Blob);
 		CryptDestroyKey(Key);
 		return FALSE;
 	}
-	fwrite(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("Private key blob has been writed to file \"DS Private Unencrypted.bin\".\n");
 
 	if(!CryptCreateHash(Container, CALG_MD5, 0, 0, &Hash))
@@ -343,19 +316,14 @@ BOOL Task8(HCRYPTPROV Container)
 		return FALSE;
 	}
 	printf("Key has been exported to private key blob.\n");
-
-	File = fopen("DS Private Encrypted.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("DS Private Encrypted.bin", Blob, BlobLength))
 	{
-		printf("Error: cant write private key blob to file. Error code: %x\n", GetLastError());
 		fclose(File);
 		free(Blob);
 		CryptDestroyKey(Key);
 		CryptDestroyKey(DerivedKey);
 		return FALSE;
 	}
-	fwrite(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("Private key blob has been writed to file \"DS Private Encrypted.bin\".\n");
 
 	free(Blob);
@@ -381,18 +349,10 @@ BOOL Task7(HCRYPTPROV Container)
 
 	printf("Task 7:\n");
 
-	File = fopen("Session Key Encrypted.bin", "rb");
-	if (File == NULL)
+	if (!ReadBinaryFile("Session Key Encrypted.bin", &Blob, &BlobLength))
 	{
-		printf("Error: cant open file \"Session Key Encrypted.bin\".\n");
 		return FALSE;
 	}
-	fseek(File, 0, SEEK_END);
-	BlobLength = ftell(File);
-	rewind(File);
-	Blob = malloc(BlobLength * sizeof(BYTE));
-	fread(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("File \"Session Key Encrypted.bin\" has been readed to blob.\n");
 
 	if (!CryptGetUserKey(Container, AT_KEYEXCHANGE, &PublicKey))
@@ -407,6 +367,7 @@ BOOL Task7(HCRYPTPROV Container)
 	if (!CryptImportKey(Container, Blob, BlobLength, PublicKey, CRYPT_EXPORTABLE, &EncryptedKey))
 	{
 		printf("Error: cant import encrypted session key. Error code: %x\n", GetLastError());
+		printf("%d\n", Blob);
 		free(Blob);
 		CryptDestroyKey(PublicKey);
 		return FALSE;
@@ -414,20 +375,12 @@ BOOL Task7(HCRYPTPROV Container)
 	printf("Encrypted session key has been imported.\n");
 	free(Blob);
 
-	File = fopen("Session Key Plaintext.bin", "rb");
-	if (File == NULL)
+	if (!ReadBinaryFile("Session Key Plaintext.bin", &Blob, &BlobLength))
 	{
-		printf("Error: cant open file \"Session Key Plaintext.bin\".\n");
 		CryptDestroyKey(EncryptedKey);
 		CryptDestroyKey(PublicKey);
 		return FALSE;
 	}
-	fseek(File, 0, SEEK_END);
-	BlobLength = ftell(File);
-	rewind(File);
-	Blob = malloc(BlobLength * sizeof(BYTE));
-	fread(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("File \"Session Key Plaintext.bin\" has been readed to blob.\n");
 
 	if (!CryptImportKey(Container, Blob, BlobLength, 0, CRYPT_EXPORTABLE, &PlainKey))
@@ -565,35 +518,22 @@ BOOL Task6()
 	}
 	printf("Key has been imported to plain text key blob.\n");
 
-	File = fopen("Session Key Plaintext.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("Session Key Plaintext.bin", Blob, BlobLength))
 	{
-		printf("Error: cant write plaint text key blob to file. Error code: %x\n", GetLastError());
 		free(Blob);
 		CryptDestroyKey(SessionKey);
 		CryptReleaseContext(Provider, 0);
 		return FALSE;
 	}
-	fwrite(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("Plaint text key blob has been writed to file.\n");
 
 	free(Blob);
 
-	File = fopen("KeyX Public.bin", "rb");
-	if (File == NULL)
+	if (!ReadBinaryFile("KeyX Public.bin", &Blob, &BlobLength))
 	{
-		printf("Error: cant open file \"KeyX Public.bin\". Error code: %x\n", GetLastError());
 		CryptReleaseContext(Provider, 0);
 		return FALSE;
 	}
-
-	fseek(File, 0, SEEK_END);
-	BlobLength = ftell(File);
-	rewind(File);
-	Blob = malloc(BlobLength * sizeof(BYTE));
-	fread(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("File \"KeyX Public.bin\" has been readed.\n");
 
 	if (!CryptImportKey(Provider, Blob, BlobLength, 0, 0, &PublicKey))
@@ -627,18 +567,14 @@ BOOL Task6()
 	}
 	printf("Session key has been exported to simple key blob.\n");
 
-	File = fopen("Session Key Encrypted.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("Session Key Encrypted.bin", Blob, BlobLength))
 	{
-		printf("Error: cant open file \"Session Key Encrypted.bin\". Error code: %x\n", GetLastError());
 		CryptDestroyKey(SessionKey);
 		CryptDestroyKey(PublicKey);
 		CryptReleaseContext(Provider, 0);
 		free(Blob);
 		return FALSE;
 	}
-	fwrite(Blob, BlobLength, 1, File);
-	fclose(File);
 	printf("Simple key blob has been writed to file \"Session Key Encrypted.bin\".\n");
 	free(Blob);
 	CryptDestroyKey(SessionKey);
@@ -682,21 +618,13 @@ BOOL Task5(HCRYPTPROV Container)
 	}
 	printf("Key has been exported to public key blob.\n");
 
-	File = fopen("DS Public.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("DS Public.bin", Blob, BlobLength))
 	{
-		printf("Error: cant write public key blob to file. Error code: %x\n", GetLastError());
-		fclose(File);
 		free(Blob);
 		CryptDestroyKey(Key);
 		return FALSE;
 	}
 	printf("Public key blob has been writed to file \"DS Public.bin\".\n");
-
-	fwrite(Blob, BlobLength, 1, File);
-
-	fclose(File);
-	free(Blob);
 	CryptDestroyKey(Key);
 	return TRUE;
 }
@@ -736,17 +664,13 @@ BOOL Task34(HCRYPTPROV Container)
 	}
 	printf("Key has been exported to public key blob.\n");
 
-	File = fopen("KeyX Public.bin", "w");
-	if (File == NULL)
+	if (!WriteBinaryFile("KeyX Public.bin", Blob, BlobLength))
 	{
-		printf("Error: cant write public key blob to file. Error code: %x\n", GetLastError());
-		fclose(File);
 		free(Blob);
 		CryptDestroyKey(Key);
 		return FALSE;
 	}
 	printf("Public key blob has been writed to file \"KeyX Public.bin\".\n");
-	fwrite(Blob, BlobLength, 1, File);
 
 	fclose(File);
 	free(Blob);
