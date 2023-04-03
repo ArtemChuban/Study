@@ -1,14 +1,13 @@
 #include <stdio.h>
 #include <windows.h>
 #include <wincrypt.h>
-#include <CloseAll.h>
+#include "CloseAll.h"
 
 #define KEYLENGTH  0x00800000
 #define ENCRYPT_ALGORITHM CALG_RC4
 #define ENCRYPT_BLOCK_SIZE 8
 
-
-BOOL EncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password);
+BOOL MyEncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password);
 
 int main(int argc, char** argv)
 {
@@ -22,7 +21,7 @@ int main(int argc, char** argv)
 	LPTSTR Destination = argv[2];
 	LPTSTR Password = argv[3];
 
-	if(!EncryptFile(Source, Destination, Password))
+	if(!MyEncryptFile(Source, Destination, Password))
 	{
 		printf("Error encrypting file! Error code: %x\n", GetLastError());
 		return 1;
@@ -33,7 +32,7 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-BOOL EncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password)
+BOOL MyEncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password)
 {
 	HANDLE SourceFile = INVALID_HANDLE_VALUE;
 	HANDLE DestinationFile = INVALID_HANDLE_VALUE;
