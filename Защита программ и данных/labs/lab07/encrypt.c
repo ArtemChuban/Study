@@ -1,60 +1,39 @@
 #include <stdio.h>
 #include <windows.h>
 #include <wincrypt.h>
+#include <CloseAll.h>
 
 #define KEYLENGTH  0x00800000
 #define ENCRYPT_ALGORITHM CALG_RC4
 #define ENCRYPT_BLOCK_SIZE 8
 
-void CloseAll(HANDLE SourceFile,
-			  HANDLE DestinationFile,
-			  BYTE* Buffer,
-			  HCRYPTHASH Hash,
-			  HCRYPTKEY Key,
-			  HCRYPTPROV CryptProv)
+
+BOOL EncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password);
+
+int main(int argc, char** argv)
 {
-	if(SourceFile)
+	if(argc != 4)
 	{
-		CloseHandle(SourceFile);
+		printf("Usage: <%s> <source file> <destination file> <password>\n", argv[0]);
+		return 1;
 	}
 
-	if(DestinationFile)
-	{
-		CloseHandle(DestinationFile);
-	}
+	LPTSTR Source = argv[1];
+	LPTSTR Destination = argv[2];
+	LPTSTR Password = argv[3];
 
-	if(Buffer)
+	if(!EncryptFile(Source, Destination, Password))
 	{
-		free(Buffer);
+		printf("Error encrypting file! Error code: %x\n", GetLastError());
+		return 1;
 	}
+	printf("Encryption of the file %s was successful. \n", Source);
+	printf("The encrypted data is in file %s.\n", Destination);
 
-	if(Hash)
-	{
-		if(!(CryptDestroyHash(Hash)))
-		{
-			printf("Error during CryptDestroyHash.\n", GetLastError());
-		}
-		Hash = 0;
-	}
-
-	if(Key)
-	{
-		if(!(CryptDestroyKey(Key)))
-		{
-			printf("Error during CryptDestroyKey!\n", GetLastError());
-		}
-	}
-
-	if(CryptProv)
-	{
-		if(!(CryptReleaseContext(CryptProv, 0)))
-		{
-			printf("Error during CryptReleaseContext!\n", GetLastError());
-		}
-	}
+	return 0;
 }
 
-BOOL MyEncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password)
+BOOL EncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Password)
 {
 	HANDLE SourceFile = INVALID_HANDLE_VALUE;
 	HANDLE DestinationFile = INVALID_HANDLE_VALUE;
@@ -179,28 +158,4 @@ BOOL MyEncryptFile(LPTSTR SourceFileName, LPTSTR DestinationFileName, LPTSTR Pas
 	} while(!fEOF);
 
 	return TRUE;
-}
-
-
-int main(int argc, char** argv)
-{
-	if(argc != 4)
-	{
-		printf("Usage: <%s> <source file> <destination file> <password>\n", argv[0]);
-		return 1;
-	}
-
-	LPTSTR Source = argv[1];
-	LPTSTR Destination = argv[2];
-	LPTSTR Password = argv[3];
-
-	if(!MyEncryptFile(Source, Destination, Password))
-	{
-		printf("Error encrypting file! Error code: %x\n", GetLastError());
-		return 1;
-	}
-	printf("Encryption of the file %s was successful. \n", Source);
-	printf("The encrypted data is in file %s.\n", Destination);
-
-	return 0;
 }
