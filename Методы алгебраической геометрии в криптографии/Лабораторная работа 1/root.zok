@@ -1,0 +1,6 @@
+def main(private field balance, field feePercent, field needs) {
+    assert(feePercent < 100);
+    field fee = balance * feePercent / 100;
+    assert(balance - fee >= needs);
+    return;
+}
