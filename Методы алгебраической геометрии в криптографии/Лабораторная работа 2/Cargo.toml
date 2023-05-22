@@ -1,0 +1,24 @@
+[package]
+name = "mlsag"
+version = "0.3.0"
+authors = ["Kevaundray Wedderburn <kevtheappdev@gmail.com"]
+edition = "2018"
+description = "Multilayer Linkable Spontaneous Anonymous Group construction"
+license = "BSD-3-Clause"
+repository = "https://github.com/crate-crypto/MLSAG"
+
+[dependencies.curve25519-dalek]
+version = "1"
+features = ["nightly"]
+
+[dependencies]
+rand = "0.6"
+sha2 = "0.8"
+merlin = "1.1"
+
+[profile.release]
+debug = true
+
+[replace]
+'clear_on_drop:0.2.5' = { path = "C:/Users/Артем/Documents/Python/MLSAG/clear_on_drop2" }
+'curve25519-dalek:1.2.6' = { path = "C:/Users/Артем/Documents/Python/MLSAG/curve25519-dalek2" }
