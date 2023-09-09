@@ -1,0 +1,6 @@
+SELECT
+EMPLOYEE_ID AS "Emp #",
+LAST_NAME AS "Employee",
+JOB_ID AS "Job",
+HIRE_DATE AS "Hire Date"
+FROM EMPLOYEES;
