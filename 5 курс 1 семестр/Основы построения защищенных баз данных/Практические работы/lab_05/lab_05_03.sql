@@ -1,0 +1,5 @@
+SELECT
+    LAST_NAME,
+    NVL(TO_CHAR(COMMISSION_PCT), 'No Commission')
+FROM
+    EMPLOYEES;
