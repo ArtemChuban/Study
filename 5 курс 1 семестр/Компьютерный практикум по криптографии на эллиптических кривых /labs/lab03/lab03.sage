@@ -9,16 +9,14 @@
 
 def test_nTorsionPoints(n, a, b, q):
   t1 = nTorsionPoints(n, a, b, q)
-  if n==7:
-    raise Exception(t1)
   F = t1[0][0].parent()
   E = EllipticCurve(F, [F(a),F(b)])
   t2 = [n*E(P) == E(0) for P in t1]
   return [len(set(t1)), len(set(t2)), t2[0]]
 
 def nTorsion_extension_deg(n, a, b, q):
-  """
-  TESTS::
+    """
+    TESTS::
     sage: nTorsion_extension_deg(3, 3, 17, 23)
     2
 
@@ -30,7 +28,7 @@ def nTorsion_extension_deg(n, a, b, q):
 
     sage: nTorsion_extension_deg(7, 1, 7, 11)
     21
-  """
+    """
   # **** Place your code here *****
     E = EllipticCurve(GF(q), [a, b])
     x,y = var('x,y')
@@ -114,8 +112,8 @@ def _bezy(n,a,b,q,pr):
         
 
 def nTorsionPoints(n, a, b, q):
-  """    
-  TESTS::
+    """    
+    TESTS::
     sage: test_nTorsionPoints(3, 3, 17, 23)
     [9, 1, True]
 
@@ -127,7 +125,7 @@ def nTorsionPoints(n, a, b, q):
 
     sage: test_nTorsionPoints(7, 1, 7, 11)
     [49, 1, True]
-  """
+    """
   # **** Place your code here *****
     E = EllipticCurve(GF(q), [a,b])
     x,y = var('x,y')
