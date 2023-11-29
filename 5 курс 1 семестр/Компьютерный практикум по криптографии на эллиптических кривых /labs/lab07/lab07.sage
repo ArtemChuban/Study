@@ -1,30 +1,13 @@
-def PH(k):
-    r = max(prime_factors(k)) 
-    if len(str(k)) <= k // r:
-        return 0
-    
-def W(p):
-    if is_prime(p) != true:
-        return 0
-    
-def P(n, lam):
-    if len(str(n)) <= n // (2 ^ (2 * lam)):
-        return 0
-    
 def Sp(n, q, lam):
     r = max(prime_factors(n))
-    if lam <= 128:
-        k = 24 
-    else:
-        k = 32
-    for i in range(1, k+1):
-        if Mod(pow(q, i)- 1, r) == 0: 
-            return 0
+    # Если lambda = 256, то какое будет k?
+    k = 24 if lam <= 128 else 32
+    for i in range(k):
+        if Mod(pow(q, i + 1)- 1, r) == 0: 
+            return False
+    return True
 
-def An(n, q):
-    if n == q:
-        return 0
-    
+
 def Check_curve(p, a, b, l):
     """
     TESTS::
@@ -52,17 +35,10 @@ def Check_curve(p, a, b, l):
     sage: Check_curve(730750818665451459112596905638433048232067471723, 425706413842211054102700238164133538302169176474, 203362936548826936673264444982866339953265530166, 160)
     False  
     """
-    # your code here.
     E = EllipticCurve(GF(p), [a, b])
     ordE = E.order()
-    if PH(ordE) == 0:
-        return false 
-    if P(ordE, l) == 0:
-        return false
-    if W(p) == 0:
-        return false 
-    if Sp(ordE, p, l) == 0:
-        return false
-    if An(ordE, p) == 0:
-        return false     
-    return true
+    return len(str(ordE)) > ordE // max(prime_factors(ordE)) and \
+           len(str(ordE)) > ordE // (2 ^ (2 * l)) and \
+           is_prime(p) and \
+           Sp(ordE, p, l) and \
+           ordE != p
