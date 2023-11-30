@@ -1,6 +1,5 @@
 def Sp(n, q, lam):
     r = max(prime_factors(n))
-    # Если lambda = 256, то какое будет k?
     k = 24 if lam <= 128 else 32
     for i in range(k):
         if Mod(pow(q, i + 1)- 1, r) == 0: 

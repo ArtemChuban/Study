@@ -18,10 +18,6 @@ def Gen_curve(p):
             return a, b, q
 
 
-# Зачем? Какова вероятность ошибки?
-# Вероятностный тест на простоту Миллера-Рабина
-# Алгоритм можно сделать детерменированным, перебрав все a <= 2ln^2 n
-# Мы запускаем на log p шагов, чтобы вероятность ошибки была 2^(-log p)
 def MR(n, a):
     k = 0
     q = n - 1
@@ -38,7 +34,6 @@ def MR(n, a):
     return False
 
 
-# Почему такая сложность?
 def Find_point(p, q, a, b):
     while True:
         while True:
@@ -49,9 +44,6 @@ def Find_point(p, q, a, b):
         y = yy.nth_root(2)
         E = EllipticCurve(GF(p), [a, b])
         L = E(x, y)
-        # Два варианта:
-        # - ord(L) = 2
-        # - ord(L) = q
         if q*L == E(0, 1, 0): 
             return L
 
